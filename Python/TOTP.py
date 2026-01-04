@@ -7,7 +7,6 @@ Features:
     - AES-256 encryption/decryption for securely storing OTP secrets.
     - Password-based application lock with SHA-256 hashing.
     - OTP list UI with live countdown timers and clipboard copy support.
-    - Crypto utility for quick text encryption/decryption with the master key.
     - Password reset functionality with validation.
     - Encrypted local cache for authentication.
 
@@ -18,7 +17,7 @@ Usage:
     - On first run, prompts the user to create a password.
     - On subsequent runs, requires password to unlock.
     - Displays OTP codes in real time with automatic refresh.
-    - Provides options to lock, reset password, and use a crypto utility.
+    - Provides options to lock and reset password.
 
 Author: Priyanshu Priyam
 """
@@ -216,64 +215,6 @@ def reset_password(parent):
     reset_btn.pack(pady=12)
     bind_enter(root, reset_btn)
 
-# ------------------- Crypto -------------------
-def open_crypto_screen(parent):
-    parent.resizable(False, False)
-    frame = tk.Frame(parent, bg="#1e1e1e")
-    frame.pack(expand=True, fill="both")
-    root.unbind_all("<Return>")
-
-    tk.Label(frame, text="🔒 Crypto Utility", font=("Segoe UI",14,"bold"),
-             bg="#1e1e1e", fg="white").pack(pady=(20,10))
-
-    tk.Label(frame, text="Enter text:", font=("Segoe UI",10,"bold"),
-             bg="#1e1e1e", fg="white").pack(pady=(5,2))
-
-    input_entry = tk.Entry(frame, font=("Segoe UI",12), width=25)
-    input_entry.pack(pady=(0,10))
-    input_entry.focus_set()
-
-    tk.Label(frame, text="Result:", font=("Segoe UI",10,"bold"),
-             bg="#1e1e1e", fg="white").pack(pady=(5,2))
-
-    output_var = tk.StringVar()
-    tk.Entry(frame, textvariable=output_var, font=("Segoe UI",12),
-             width=25, state="readonly").pack(pady=(0,10))
-
-    error_label = tk.Label(frame, text="", fg="red", bg="#1e1e1e", font=("Segoe UI",9))
-    error_label.pack(pady=(0,5))
-
-    def encrypt_text():
-        global decrypt_key
-        if not decrypt_key:
-            error_label.config(text="Decryption key not set!")
-            return
-        try:
-            output_var.set(encrypt_aes256(input_entry.get(), decrypt_key))
-            error_label.config(text="")
-        except Exception as e:
-            error_label.config(text=f"Error: {str(e)}")
-
-    def decrypt_text():
-        global decrypt_key
-        if not decrypt_key:
-            error_label.config(text="Decryption key not set!")
-            return
-        try:
-            output_var.set(decrypt_aes256(input_entry.get(), decrypt_key))
-            error_label.config(text="")
-        except Exception as e:
-            error_label.config(text=f"Error: {str(e)}")
-
-    tk.Button(frame, text="Encrypt", font=("Segoe UI",10), bg="#28db73", fg="white",
-              relief="flat", command=encrypt_text).pack(side="left", padx=20, pady=20, expand=True)
-
-    tk.Button(frame, text="Decrypt", font=("Segoe UI",10), bg="#ff4d4d", fg="white",
-              relief="flat", command=decrypt_text).pack(side="right", padx=20, pady=20, expand=True)
-
-    tk.Button(frame, text="Copy Result", font=("Segoe UI",10), bg="#444", fg="white",
-              relief="flat", command=lambda: copy_and_toast(output_var, parent)).pack(pady=(10,20))
-
 # ------------------- Main UI -------------------
 def build_main_ui(root, otp_entries):
     global canvas, inner_frame, frames
@@ -357,10 +298,6 @@ def build_main_ui(root, otp_entries):
     tk.Button(footer, text="🔄 Reset", font=("Segoe UI", 10),
               bg="#2b2b2b", fg="white", relief="flat", height=2,
               command=lambda: open_popup(reset_password, title="Reset Password", size="300x300")).pack(side="left", fill="x", expand=True)
-
-    tk.Button(footer, text="⚙️ Crypto", font=("Segoe UI", 10),
-              bg="#2b2b2b", fg="white", relief="flat", height=2,
-              command=lambda: open_popup(open_crypto_screen, title="Crypto Utility", size="370x300")).pack(side="left", fill="x", expand=True)
 
     if otp_entries:
         update_totps(root)
