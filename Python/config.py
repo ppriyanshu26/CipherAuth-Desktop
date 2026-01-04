@@ -11,11 +11,11 @@ elif sys.platform.startswith("linux"):
 else:
     BASE_APP_DIR = os.getcwd() 
 
-APP_FOLDER = os.path.join(BASE_APP_DIR, "TOTP Authenticator")
+APP_FOLDER = os.path.join(BASE_APP_DIR, "CipherAuth")
 os.makedirs(APP_FOLDER, exist_ok=True)
 ENCODED_FILE = os.path.join(APP_FOLDER, "creds.txt")
 
-SERVICE_NAME = "TOTP Authenticator"
+SERVICE_NAME = "CipherAuth"
 USERNAME = getpass.getuser()
 
 decrypt_key = None
