@@ -47,6 +47,13 @@ def copy_and_toast(var, root):
 
 def on_mousewheel(event):
     if config.canvas:
+        # Get current scroll position
+        top, bottom = config.canvas.yview()
+        # Prevent scrolling past boundaries
+        if event.delta > 0 and top <= 0:
+            return  # Already at top, don't scroll up
+        if event.delta < 0 and bottom >= 1:
+            return  # Already at bottom, don't scroll down
         config.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
 def save_password(password):

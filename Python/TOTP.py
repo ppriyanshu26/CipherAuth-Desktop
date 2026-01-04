@@ -26,8 +26,8 @@ def open_popup(func, title="Popup", size="370x300", *args, **kwargs):
     root_w = root.winfo_width()
     root_h = root.winfo_height()
     win_w, win_h = map(int, size.split("x"))
-    x = root_x + (root_w // 2 - win_w // 2)
-    y = root_y + (root_h // 2 - win_h // 2)
+    x = root_x + (root_w//2-win_w//2)
+    y = root_y + (root_h//2-win_h//2)
     popup.geometry(f"{win_w}x{win_h}+{x}+{y}")
 
     def on_close():
@@ -48,7 +48,7 @@ def render_otp_list(root, otp_entries, query=""):
     config.frames.clear()
     
     query = query.lower().strip()
-    filtered = [e for e in otp_entries if query in e[0].lower()] if query else otp_entries
+    filtered = [e for e in otp_entries if e[0].lower().startswith(query)] if query else otp_entries
 
     if not filtered:
         msg = "🔍 No matches found" if query else "⚠️ No OTPs Loaded"
@@ -131,42 +131,45 @@ def build_main_ui(root, otp_entries):
         widget.destroy()
 
     top_bar = tk.Frame(root, bg="#1e1e1e")
-    top_bar.pack(side="top", fill="x", padx=10, pady=5)
+    top_bar.pack(side="top", fill="x", padx=10)
 
     search_var = tk.StringVar()
-    search_entry = tk.Entry(top_bar, textvariable=search_var, font=("Segoe UI", 10), bg="#333", fg="white", insertbackground="white", relief="flat")
-    search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), pady=5)
+    search_entry = tk.Entry(top_bar, textvariable=search_var, font=("Segoe UI", 12), bg="#333", fg="#888", insertbackground="white", relief="flat")
+    search_entry.insert(0, "Type to search")
+    search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), pady=10, ipady=5)
     
+    def on_focus_in(event):
+        if search_var.get() == "Type to search":
+            search_entry.delete(0, tk.END)
+            search_entry.config(fg="white")
+
+    def on_focus_out(event):
+        if not search_var.get():
+            search_entry.insert(0, "Type to search")
+            search_entry.config(fg="#888")
+
+    search_entry.bind("<FocusIn>", on_focus_in)
+    search_entry.bind("<FocusOut>", on_focus_out)
+
     def on_search_change(*args):
-        render_otp_list(root, otp_entries, search_var.get())
+        query = search_var.get()
+        if query == "Type to search":
+            query = ""
+        render_otp_list(root, otp_entries, query)
     search_var.trace_add("write", on_search_change)
 
     lock_btn = tk.Button(top_bar, text="🔒 Lock", font=("Segoe UI", 9, "bold"),
                      bg="#444", fg="white", relief="flat", activebackground="#666",
                      command=lambda: lock_app(root, otp_entries))
-    lock_btn.pack(side="right", pady=5)
+    lock_btn.pack(side="right", pady=10)
+
+    # Separator line
+    tk.Frame(root, height=1, bg="#333").pack(fill="x")
 
     outer_frame = tk.Frame(root, bg="#1e1e1e")
     outer_frame.pack(fill="both", expand=True)
 
-    canvas_frame = tk.Frame(outer_frame, bg="#1e1e1e")
-    canvas_frame.pack(side="top", fill="both", expand=True)
-
-    config.canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
-    scrollbar = tk.Scrollbar(canvas_frame, orient="vertical", command=config.canvas.yview)
-    config.canvas.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side="right", fill="y")
-    config.canvas.pack(side="left", fill="both", expand=True)
-
-    config.inner_frame = tk.Frame(config.canvas, bg="#1e1e1e")
-    config.canvas.create_window((0, 0), window=config.inner_frame, anchor="nw")
-    config.inner_frame.bind("<Configure>", lambda e: config.canvas.configure(scrollregion=config.canvas.bbox("all")))
-    config.canvas.bind("<Configure>", lambda e: config.canvas.itemconfig("all", width=e.width))
-    config.canvas.bind_all("<MouseWheel>", utils.on_mousewheel)
-
-    render_otp_list(root, otp_entries)
-
-    # ---- FOOTER ----
+    # ---- FOOTER (pack first so it stays at bottom) ----
     footer = tk.Frame(outer_frame, bg="#1e1e1e")
     footer.pack(side="bottom", fill="x")
 
@@ -182,17 +185,26 @@ def build_main_ui(root, otp_entries):
               bg="#2b2b2b", fg="white", relief="flat", height=2,
               command=export_handler.handle_download).pack(side="left", fill="x", expand=True)
 
-    if otp_entries:
-        update_totps(root)
+    # ---- SCROLLABLE AREA ----
+    canvas_frame = tk.Frame(outer_frame, bg="#1e1e1e")
+    canvas_frame.pack(side="top", fill="both", expand=True)
 
+    config.canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0, borderwidth=0)
+    scrollbar = tk.Scrollbar(canvas_frame, orient="vertical", command=config.canvas.yview)
+    config.canvas.configure(yscrollcommand=scrollbar.set)
+    scrollbar.pack(side="right", fill="y")
+    config.canvas.pack(side="left", fill="both", expand=True)
 
-    tk.Button(footer, text="➕ Edit Creds", font=("Segoe UI", 10),
-              bg="#2b2b2b", fg="white", relief="flat", height=2,
-              command=lambda: open_popup(creds_handler.edit_credentials_popup, title="Edit Credentials", size="350x350", root=root, build_main_ui_callback=build_main_ui)).pack(side="left", fill="x", expand=True)
+    config.inner_frame = tk.Frame(config.canvas, bg="#1e1e1e")
+    config.canvas.create_window((0, 0), window=config.inner_frame, anchor="nw", tags="inner_frame")
+    config.inner_frame.bind("<Configure>", lambda e: config.canvas.configure(scrollregion=config.canvas.bbox("all")))
+    config.canvas.bind("<Configure>", lambda e: config.canvas.itemconfig("inner_frame", width=e.width))
+    config.canvas.bind_all("<MouseWheel>", utils.on_mousewheel)
 
-    tk.Button(footer, text="📥 Download", font=("Segoe UI", 10),
-              bg="#2b2b2b", fg="white", relief="flat", height=2,
-              command=export_handler.handle_download).pack(side="left", fill="x", expand=True)
+    # Reset scroll position to top
+    config.canvas.yview_moveto(0)
+
+    render_otp_list(root, otp_entries)
 
     if otp_entries:
         update_totps(root)
