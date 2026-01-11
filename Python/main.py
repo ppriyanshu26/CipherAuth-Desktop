@@ -226,7 +226,7 @@ def build_create_password_screen(root, otp_entries):
 
     def submit_password():
         if pwd1.get() != pwd2.get(): error_label.configure(text="Passwords do not match.")
-        elif len(pwd1.get()) < 4: error_label.configure(text="Password too short (min 4 chars).")
+        elif len(pwd1.get()) < 8: error_label.configure(text="Password too short (min 8 chars).")
         else: utils.save_password(pwd1.get()); frame.destroy(); build_lock_screen(root, otp_entries)
 
     submit_btn = ctk.CTkButton(frame, text="Save & Continue", font=("Segoe UI",14, "bold"),

@@ -110,8 +110,8 @@ def reset_password_popup(parent, root, otp_entries, build_main_ui_callback):
             error_label.configure(text="Incorrect current password")
         elif new_entry.get() != confirm_entry.get():
             error_label.configure(text="New passwords do not match")
-        elif len(new_entry.get()) < 4:
-            error_label.configure(text="Password too short (min 4 chars)")
+        elif len(new_entry.get()) < 8:
+            error_label.configure(text="Password too short (min 8 chars)")
         else:
             new_pwd = new_entry.get()
             if reencrypt_all_data(current_pwd, new_pwd):
