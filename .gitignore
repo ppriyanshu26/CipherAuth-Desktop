@@ -7,17 +7,15 @@ venv/
 # Build & Packaging
 build/
 dist/
-*.spec
 *.msix
-Assets/
+*.exe
 result.xml
 
-# Security (NEVER COMMIT PFX FILES)
+# Security
 *.pfx
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Keep requirements
 !requirements.txt

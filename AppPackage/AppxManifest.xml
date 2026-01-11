@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" 
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" 
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" 
+         IgnorableNamespaces="uap rescap">
+
+  <Identity Name="PriyanshuPriyam.CipherAuth" 
+            Publisher="CN=535EC210-8E79-4123-A1BC-3B69A02701C8" 
+            Version="3.0.0.0" 
+            ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>CipherAuth</DisplayName>
+    <PublisherDisplayName>Priyanshu Priyam</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22000.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+  <Applications>
+    <Application Id="App" Executable="CipherAuth.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="CipherAuth" 
+                          Description="A secure TOTP Authenticator" 
+                          BackgroundColor="transparent" 
+                          Square150x150Logo="Assets\MediumTile.png" 
+                          Square44x44Logo="Assets\AppList.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\MediumTile.png" 
+                         Square71x71Logo="Assets\SmallTile.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+</Package>
