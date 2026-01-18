@@ -106,9 +106,9 @@ def edit_credentials_full_ui(root, build_main_ui_callback):
             config.toast_label.destroy()
         color = "#ff4d4d" if is_error else "#444"
         config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white",
-                               font=("Segoe UI", 12), corner_radius=8, padx=12, pady=6)
+                               font=("Segoe UI", 12), corner_radius=10, padx=16, pady=12)
         config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
-        root.after(2000, lambda: config.toast_label.destroy() if config.toast_label else None)
+        root.after(2500, lambda: config.toast_label.destroy() if config.toast_label else None)
     
     def go_back():
         new_entries = utils.load_otps_from_decrypted(utils.decode_encrypted_file())
@@ -143,8 +143,23 @@ def edit_credentials_full_ui(root, build_main_ui_callback):
     cancel_btn.pack(side="left", padx=5)
     
     platform_entry.focus()
-    root.bind("<Return>", lambda e: save_cred())
-    root.bind("<Escape>", lambda e: go_back())
+    
+    def safe_save_cred(event=None):
+        try:
+            if platform_entry.winfo_exists() and user_entry.winfo_exists() and secret_entry.winfo_exists() and path_entry.winfo_exists():
+                save_cred()
+        except Exception:
+            pass
+    
+    def safe_go_back(event=None):
+        try:
+            if frame.winfo_exists():
+                go_back()
+        except Exception:
+            pass
+    
+    root.bind("<Return>", safe_save_cred)
+    root.bind("<Escape>", safe_go_back)
 
 
 def edit_credentials_popup(parent, root, build_main_ui_callback):

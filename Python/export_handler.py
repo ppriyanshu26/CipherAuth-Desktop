@@ -1,5 +1,4 @@
-import os, csv, utils
-from tkinter import messagebox
+import os, csv, utils, customtkinter as ctk, config
 
 def export_to_csv():
     otps = utils.decode_encrypted_file()
@@ -16,13 +15,20 @@ def export_to_csv():
             for platform, uri, _ in otps:
                 writer.writerow([platform, uri])
                 
-        return True, f"Exported to {filepath}"
+        return True, f"✅ Exported to {filepath}"
     except Exception as e:
-        return False, str(e)
+        return False, f"❌ {str(e)}"
 
-def handle_download():
+def show_download_toast(root, message, is_error=False):
+    if config.toast_label:
+        config.toast_label.destroy()
+    color = "#ff4d4d" if is_error else "#444"
+    config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white",
+                               font=("Segoe UI", 14), corner_radius=10, padx=16, pady=12)
+    config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
+    root.after(2500, lambda: config.toast_label.destroy() if config.toast_label else None)
+
+def handle_download(root):
     success, msg = export_to_csv()
-    if success:
-        messagebox.showinfo("Export Successful", msg)
-    else:
-        messagebox.showerror("Export Failed", msg)
+    is_error = not success
+    show_download_toast(root, msg, is_error=is_error)

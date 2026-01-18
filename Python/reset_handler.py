@@ -107,9 +107,9 @@ def reset_password_full_ui(root, otp_entries, build_main_ui_callback):
             config.toast_label.destroy()
         color = "#ff4d4d" if is_error else "#444"
         config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white",
-                               font=("Segoe UI", 12), corner_radius=8, padx=12, pady=6)
+                               font=("Segoe UI", 14), corner_radius=10, padx=16, pady=12)
         config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
-        root.after(2000, lambda: config.toast_label.destroy() if config.toast_label else None)
+        root.after(2500, lambda: config.toast_label.destroy() if config.toast_label else None)
 
     def perform_reset():
         stored_hash = utils.get_stored_password()
@@ -145,8 +145,22 @@ def reset_password_full_ui(root, otp_entries, build_main_ui_callback):
                           font=("Segoe UI", 13, "bold"), width=120, height=40, fg_color="#3d3d3d")
     cancel_btn.pack(side="left", padx=5)
 
-    root.bind("<Return>", lambda e: perform_reset())
-    root.bind("<Escape>", lambda e: go_back())
+    def safe_perform_reset(event=None):
+        try:
+            if current_entry.winfo_exists() and new_entry.winfo_exists() and confirm_entry.winfo_exists():
+                perform_reset()
+        except Exception:
+            pass
+    
+    def safe_go_back(event=None):
+        try:
+            if frame.winfo_exists():
+                go_back()
+        except Exception:
+            pass
+    
+    root.bind("<Return>", safe_perform_reset)
+    root.bind("<Escape>", safe_go_back)
 
 
 def reset_password_popup(parent, root, otp_entries, build_main_ui_callback):

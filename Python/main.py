@@ -179,7 +179,7 @@ def build_main_ui(root, otp_entries):
 
     ctk.CTkButton(footer, text="📥 Download", font=("Segoe UI", 12),
               fg_color="#2b2b2b", text_color="white", hover_color="#3d3d3d", height=45, corner_radius=0,
-              command=export_handler.handle_download).pack(side="left", fill="x", expand=True)
+              command=lambda: export_handler.handle_download(root)).pack(side="left", fill="x", expand=True)
 
     config.inner_frame = ctk.CTkScrollableFrame(outer_frame, fg_color="#1e1e1e", corner_radius=0)
     config.inner_frame.pack(fill="both", expand=True)
