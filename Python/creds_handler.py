@@ -104,7 +104,7 @@ def edit_credentials_full_ui(root, build_main_ui_callback):
     def show_toast(message, is_error=False):
         if config.toast_label:
             config.toast_label.destroy()
-        color = "#ff4d4d" if is_error else "#444"
+        color = "#ff4d4d" if is_error else "#22cc22"
         config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white",
                                font=("Segoe UI", 12), corner_radius=10, padx=16, pady=12)
         config.toast_label.place(relx=0.5, rely=0.9, anchor='s')

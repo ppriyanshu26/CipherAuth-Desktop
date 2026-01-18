@@ -37,7 +37,7 @@ def clean_uri(uri):
 def copy_and_toast(var, root):
     pyperclip.copy(var.get())
     if config.toast_label: config.toast_label.destroy()
-    config.toast_label = ctk.CTkLabel(root, text="✅ Copied to clipboard", fg_color="#444", text_color="white",
+    config.toast_label = ctk.CTkLabel(root, text="✅ Copied to clipboard", fg_color="#22cc22", text_color="white",
                            font=("Segoe UI", 12), corner_radius=8, padx=12, pady=6)
     config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
     root.after(1500, config.toast_label.destroy)

@@ -15,14 +15,14 @@ def export_to_csv():
             for platform, uri, _ in otps:
                 writer.writerow([platform, uri])
                 
-        return True, f"✅ Exported to {filepath}"
+        return True, f"✅ File saved to desktop"
     except Exception as e:
         return False, f"❌ {str(e)}"
 
 def show_download_toast(root, message, is_error=False):
     if config.toast_label:
         config.toast_label.destroy()
-    color = "#ff4d4d" if is_error else "#444"
+    color = "#ff4d4d" if is_error else "#22cc22"
     config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white",
                                font=("Segoe UI", 14), corner_radius=10, padx=16, pady=12)
     config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
