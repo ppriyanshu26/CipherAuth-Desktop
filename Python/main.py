@@ -122,21 +122,35 @@ def render_otp_list(root, otp_entries, query=""):
                     if img_pil:
                         img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 200))
                         lbl = ctk.CTkLabel(f, image=img_ctk, text="", cursor="hand2")
-                        lbl.image = img_ctk 
+                        lbl.image = img_ctk
+                        lbl.is_revealed = False
                         lbl.pack()
-                        hint = ctk.CTkLabel(f, text="Tap to view QR", font=("Segoe UI", 10, "italic"), text_color="#888888")
+                        hint = ctk.CTkLabel(f, text="Tap to unblur QR", font=("Segoe UI", 12, "italic"), text_color="#888888")
                         hint.pack(pady=(2, 0))
                         def on_click(e, p=path, l=lbl, h=hint):
-                            reveal_qr(l, p)
-                            h.destroy()
+                            if not l.is_revealed:
+                                reveal_qr(l, p, h)
+                            else:
+                                blur_qr(l, p, h)
                         lbl.bind("<Button-1>", on_click)
 
-                def reveal_qr(label, path):
+                def reveal_qr(label, path, hint):
                     img_pil = utils.get_qr_image(path, config.decrypt_key, blur=False)
                     if img_pil:
                         img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 200))
                         label.configure(image=img_ctk)
                         label.image = img_ctk
+                        label.is_revealed = True
+                        hint.configure(text="Tap to blur QR")
+
+                def blur_qr(label, path, hint):
+                    img_pil = utils.get_qr_image(path, config.decrypt_key, blur=True)
+                    if img_pil:
+                        img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 200))
+                        label.configure(image=img_ctk)
+                        label.image = img_ctk
+                        label.is_revealed = False
+                        hint.configure(text="Tap to unblur QR")
 
             config.frames.append({"totp": totp_obj, "code_var": code_var, "time_var": time_var, "time_label": time_label})
 
