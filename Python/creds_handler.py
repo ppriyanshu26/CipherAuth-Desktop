@@ -100,13 +100,13 @@ def edit_credentials_full_ui(root, build_main_ui_callback):
     path_entry.pack(side="left", fill="x", expand=True)
     ctk.CTkButton(path_frame, text="Browse", width=70, height=32, command=lambda: (filename := filedialog.askopenfilename(title="Select QR Code", filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp")])) and (path_entry.delete(0, tk.END), path_entry.insert(0, filename)), fg_color="#444", text_color="white", hover_color="#555", font=("Segoe UI", 10)).pack(side="right", padx=(8, 0))
     
-    info_label = ctk.CTkLabel(frame, text="⚠️  Choose either manual entry (Username + Secret) or upload a QR code", font=("Segoe UI", 12), text_color="#888")
+    info_label = ctk.CTkLabel(frame, text="⚠️ Choose either manual entry (Username + Secret) or upload a QR code", font=("Segoe UI", 12), text_color="#888")
     info_label.pack(pady=4)
     
     def show_toast(msg, err=False):
         if config.toast_label: config.toast_label.destroy()
         config.toast_label = ctk.CTkLabel(root, text=msg, fg_color="#ff4d4d" if err else "#22cc22", text_color="white", font=("Segoe UI", 12), corner_radius=10, padx=16, pady=12)
-        config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
+        config.toast_label.place(relx=0.5, rely=0.95, anchor='s')
         root.after(2500, lambda: config.toast_label.destroy() if config.toast_label else None)
     
     def go_back():
