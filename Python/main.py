@@ -30,7 +30,7 @@ def build_sync_screen(root, otp_entries):
     header.pack(side="top", fill="x", padx=10, pady=(10, 5))
     
     ctk.CTkLabel(header, text="🔃 Sync Settings", font=("Segoe UI", 18, "bold"), text_color="white").pack(side="left")
-    back_btn = ctk.CTkButton(header, text="← Back", width=80, height=35, font=("Segoe UI", 12), fg_color="#444", text_color="white", hover_color="#666", command=lambda: build_main_ui(root, otp_entries))
+    back_btn = ctk.CTkButton(header, text="← Back", width=80, height=35, font=("Segoe UI", 12), fg_color="#444", text_color="white", hover_color="#666", command=lambda: (utils.stop_sync_broadcast(), build_main_ui(root, otp_entries)))
     back_btn.pack(side="right")
     
     ctk.CTkFrame(root, height=1, fg_color="#333").pack(fill="x")
@@ -55,7 +55,7 @@ def build_sync_screen(root, otp_entries):
         if utils.save_device_name(name):
             utils.start_sync_broadcast(name)
             error_label.configure(text="✓ Device name saved & sync started", text_color="#28db73")
-            root.after(1500, lambda: build_main_ui(root, otp_entries))
+            root.after(1500, lambda: (utils.stop_sync_broadcast(), build_main_ui(root, otp_entries)))
         else:
             error_label.configure(text="❌ Failed to save device name")
     
@@ -73,7 +73,8 @@ def build_sync_screen(root, otp_entries):
         for w in devices_frame.winfo_children():
             w.destroy()
         
-        devices = utils.discover_cipherauth_devices()
+        current_name = utils.load_device_name()
+        devices = utils.discover_cipherauth_devices(exclude_device_name=current_name)
         
         if not devices:
             ctk.CTkLabel(devices_frame, text="No CipherAuth devices found", font=("Segoe UI", 11), text_color="#888").pack(pady=20)
@@ -88,6 +89,7 @@ def build_sync_screen(root, otp_entries):
                 ip_label = ctk.CTkLabel(device_item, text=device['ip'], font=("Segoe UI", 9), text_color="#666")
                 ip_label.pack(anchor="w", padx=10, pady=(0, 6))
     
+    utils.start_sync_broadcast(current_name)
     root.after(500, load_devices)
     
     root.bind("<Return>", lambda _: save_device_name())

@@ -125,6 +125,16 @@ class SyncDeviceAdvertiser:
         self.thread = None
         self.sock = None
     
+    def _get_local_ip(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return "127.0.0.1"
+    
     def start(self):
         if self.running:
             return
@@ -146,21 +156,27 @@ class SyncDeviceAdvertiser:
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             
+            local_ip = self._get_local_ip()
+            print(f"[BROADCAST] Starting broadcast as '{self.device_name}' on IP {local_ip}")
+            
             while self.running:
                 try:
                     message = json.dumps({
                         "type": self.SERVICE_TYPE,
                         "device_name": self.device_name,
-                        "ip": socket.gethostbyname(socket.gethostname()),
+                        "ip": local_ip,
                         "timestamp": time.time()
                     }).encode('utf-8')
                     
+                    print(f"[BROADCAST] Sending: {message.decode('utf-8')}")
                     self.sock.sendto(message, ('<broadcast>', self.BROADCAST_PORT))
-                except:
+                except Exception as e:
+                    print(f"[BROADCAST] Send error: {e}")
                     pass
                 
                 time.sleep(1)
-        except:
+        except Exception as e:
+            print(f"[BROADCAST] Loop error: {e}")
             pass
         finally:
             if self.sock:
@@ -184,7 +200,7 @@ def stop_sync_broadcast():
         _advertiser.stop()
         _advertiser = None
 
-def discover_cipherauth_devices():
+def discover_cipherauth_devices(exclude_device_name=None):
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -193,15 +209,23 @@ def discover_cipherauth_devices():
         
         devices = {}
         start_time = time.time()
+        print(f"[DISCOVERY] Starting discovery on port {SyncDeviceAdvertiser.BROADCAST_PORT}...")
         
         while time.time() - start_time < 3:
             try:
                 data, addr = sock.recvfrom(1024)
                 message = json.loads(data.decode('utf-8'))
+                print(f"[DISCOVERY] Received: {message} from {addr}")
                 
                 if message.get('type') == SyncDeviceAdvertiser.SERVICE_TYPE:
                     device_name = message.get('device_name', 'Unknown')
+                    
+                    if exclude_device_name and device_name == exclude_device_name:
+                        print(f"[DISCOVERY] Excluding own device: {device_name}")
+                        continue
+                    
                     device_ip = message.get('ip', addr[0])
+                    print(f"[DISCOVERY] Found device: {device_name} ({device_ip})")
                     devices[device_name] = {
                         'name': device_name,
                         'ip': device_ip,
@@ -209,11 +233,14 @@ def discover_cipherauth_devices():
                     }
             except socket.timeout:
                 break
-            except:
+            except Exception as e:
+                print(f"[DISCOVERY] Error parsing message: {e}")
                 pass
         sock.close()
+        print(f"[DISCOVERY] Discovery complete. Found {len(devices)} devices")
         return list(devices.values())
-    except:
+    except Exception as e:
+        print(f"[DISCOVERY] Discovery error: {e}")
         return []
 
 def get_stored_password():
