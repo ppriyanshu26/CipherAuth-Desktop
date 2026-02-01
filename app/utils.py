@@ -1,8 +1,44 @@
 import customtkinter as ctk
-import pyperclip, os, hashlib, config, cv2, aes, io, json, time, sys, socket, threading
+import os, hashlib, config, cv2, aes, io, json, time, sys, socket, threading, subprocess, pyotp, qrcode
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse, unquote
 import numpy as np
 from PIL import Image, ImageFilter
+
+def copy_to_clipboard(text):
+    try:
+        import pyperclip
+        pyperclip.copy(text)
+        return True
+    except Exception:
+        pass
+    
+    if sys.platform == "win32":
+        try:
+            process = subprocess.Popen(['clip'], stdin=subprocess.PIPE)
+            process.communicate(text.encode('utf-8'))
+            return True
+        except Exception:
+            pass
+    elif sys.platform == "darwin":
+        try:
+            process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+            process.communicate(text.encode('utf-8'))
+            return True
+        except Exception:
+            pass
+    else:
+        for cmd in ['xclip', 'xsel', 'wl-copy']:
+            try:
+                if cmd == 'wl-copy':
+                    process = subprocess.Popen([cmd], stdin=subprocess.PIPE)
+                else:
+                    process = subprocess.Popen([cmd, '-selection', 'clipboard'], stdin=subprocess.PIPE)
+                process.communicate(text.encode('utf-8'))
+                return True
+            except Exception:
+                continue
+    
+    return False
 
 def read_qr_from_bytes(image_bytes):
     try:
@@ -78,16 +114,37 @@ def delete_image_path(cred_id):
     except: pass
     return True
 
-def get_qr_image(cred_id, key, blur=True):
-    enc_img_path = get_image_path(cred_id)
-    if not enc_img_path or not os.path.exists(enc_img_path): return None
+def generate_qr_from_secret(platform, username, secret):
     try:
-        img_bytes = aes.Crypto(key).decrypt_bytes(open(enc_img_path, 'rb').read())
-        img = Image.open(io.BytesIO(img_bytes))
+        import pyotp, qrcode
+        secret = secret.replace(" ", "").upper()
+        pyotp.TOTP(secret).now()
+        uri = pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=platform)
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(uri)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
         if img.mode != "RGBA": img = img.convert("RGBA")
         img = img.resize((200, 200), Image.Resampling.LANCZOS)
-        return img.filter(ImageFilter.GaussianBlur(radius=15)) if blur else img
+        return img
     except: return None
+
+def get_qr_image(cred_id, key, blur=True, cred_data=None):
+    enc_img_path = get_image_path(cred_id)
+    if enc_img_path and os.path.exists(enc_img_path):
+        try:
+            img_bytes = aes.Crypto(key).decrypt_bytes(open(enc_img_path, 'rb').read())
+            img = Image.open(io.BytesIO(img_bytes))
+            if img.mode != "RGBA": img = img.convert("RGBA")
+            img = img.resize((200, 200), Image.Resampling.LANCZOS)
+            return img.filter(ImageFilter.GaussianBlur(radius=15)) if blur else img
+        except: pass
+    
+    if cred_data and 'secretcode' in cred_data:
+        img = generate_qr_from_secret(cred_data.get('platform', ''), cred_data.get('username', ''), cred_data.get('secretcode', ''))
+        return img.filter(ImageFilter.GaussianBlur(radius=15)) if (blur and img) else img
+    
+    return None
 
 def save_password(password):
     try:
@@ -258,9 +315,15 @@ def truncate(text, max_len, suffix="..."):
     return f"{text[:max_len]}{suffix}" if len(text) > max_len else text
 
 def copy_and_toast(var, root):
-    pyperclip.copy(var.get())
+    if copy_to_clipboard(var.get()):
+        message = "✅ Copied to clipboard"
+        color = "#22cc22"
+    else:
+        message = "⚠️ Copy failed"
+        color = "#ff8866"
+    
     if config.toast_label: config.toast_label.destroy()
-    config.toast_label = ctk.CTkLabel(root, text="✅ Copied to clipboard", fg_color="#22cc22", text_color="white", font=("Segoe UI", 12), corner_radius=8, padx=12, pady=6)
+    config.toast_label = ctk.CTkLabel(root, text=message, fg_color=color, text_color="white", font=("Segoe UI", 12), corner_radius=8, padx=12, pady=6)
     config.toast_label.place(relx=0.5, rely=0.9, anchor='s')
     root.after(1500, lambda: config.toast_label.destroy() if config.toast_label else None)
 

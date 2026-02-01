@@ -1,16 +1,20 @@
 import tkinter as tk
 import customtkinter as ctk
-import pyotp, sys, time, hashlib, ctypes, config, queue
+import pyotp, sys, time, hashlib, config, queue
 import utils, reset_handler, creds_handler, export_handler, sync_connection
 
 if sys.platform == "win32":
     try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
-    except Exception:
+        import ctypes
         try:
-            ctypes.windll.user32.SetProcessDPIAware()
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
-            pass
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+    except (AttributeError, ImportError):
+        pass
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -249,7 +253,6 @@ def render_otp_list(root, otp_entries, query=""):
     
     for cred in filtered:
         platform, username, secret, cred_id = cred.get('platform', 'Unknown'), cred.get('username', 'Unknown'), cred.get('secretcode', ''), cred.get('id')
-        enc_img_path = utils.get_image_path(cred_id)
         
         if not secret: continue
         totp_obj = pyotp.TOTP(secret)
@@ -265,10 +268,8 @@ def render_otp_list(root, otp_entries, query=""):
         del_btn = ctk.CTkButton(header, text="Delete", width=60, height=24, font=("Segoe UI", 11), fg_color="transparent", text_color="#ff4d4d", hover_color="#3d3d3d", command=lambda c=cred: creds_handler.show_delete_confirmation_screen(root, c, otp_entries, build_main_ui))
         del_btn.pack(side="right", padx=(5, 0))
         
-        qr_btn = None
-        if enc_img_path:
-            qr_btn = ctk.CTkButton(header, text="View QR", width=60, height=24, font=("Segoe UI", 11), fg_color="#444", text_color="white", hover_color="#555")
-            qr_btn.pack(side="right")
+        qr_btn = ctk.CTkButton(header, text="View QR", width=60, height=24, font=("Segoe UI", 11), fg_color="#444", text_color="white", hover_color="#555")
+        qr_btn.pack(side="right")
         
         ctk.CTkLabel(card, text=utils.truncate_username(username), font=("Segoe UI", 11), text_color="#aaaaaa", anchor="w").pack(fill="x", padx=10)
         
@@ -286,36 +287,35 @@ def render_otp_list(root, otp_entries, query=""):
         
         config.frames.append({"totp": totp_obj, "code_var": code_var, "time_var": time_var, "time_label": time_label})
         
-        if qr_btn:
-            qr_frame = ctk.CTkFrame(card, fg_color="transparent")
-            
-            def show_qr(f, cid=cred_id, btn=qr_btn):
-                for w in f.winfo_children(): w.destroy()
-                if (img := utils.get_qr_image(cid, config.decrypt_key, blur=True)):
+        qr_frame = ctk.CTkFrame(card, fg_color="transparent")
+        
+        def show_qr(f, cid=cred_id, btn=qr_btn, cred=cred):
+            for w in f.winfo_children(): w.destroy()
+            if (img := utils.get_qr_image(cid, config.decrypt_key, blur=True, cred_data=cred)):
+                img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
+                lbl = ctk.CTkLabel(f, image=img_ctk, text="", cursor="hand2")
+                lbl.image, lbl.is_revealed = img_ctk, False
+                lbl.pack()
+                hint = ctk.CTkLabel(f, text="Tap to unblur QR", font=("Segoe UI", 12, "italic"), text_color="#888888")
+                hint.pack(pady=(2, 0))
+                lbl.bind("<Button-1>", lambda e, l=lbl, cid=cid, h=hint, cred=cred: toggle_qr_reveal(l, cid, h, cred))
+        
+        def toggle_qr_reveal(lbl, cid, hint, cred):
+            lbl.is_revealed = not lbl.is_revealed
+            if lbl.is_revealed:
+                if (img := utils.get_qr_image(cid, config.decrypt_key, blur=False, cred_data=cred)):
                     img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
-                    lbl = ctk.CTkLabel(f, image=img_ctk, text="", cursor="hand2")
-                    lbl.image, lbl.is_revealed = img_ctk, False
-                    lbl.pack()
-                    hint = ctk.CTkLabel(f, text="Tap to unblur QR", font=("Segoe UI", 12, "italic"), text_color="#888888")
-                    hint.pack(pady=(2, 0))
-                    lbl.bind("<Button-1>", lambda e, l=lbl, cid=cid, h=hint: toggle_qr_reveal(l, cid, h))
-            
-            def toggle_qr_reveal(lbl, cid, hint):
-                lbl.is_revealed = not lbl.is_revealed
-                if lbl.is_revealed:
-                    if (img := utils.get_qr_image(cid, config.decrypt_key, blur=False)):
-                        img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
-                        lbl.configure(image=img_ctk)
-                        lbl.image = img_ctk
-                        hint.configure(text="Tap to blur QR")
-                else:
-                    if (img := utils.get_qr_image(cid, config.decrypt_key, blur=True)):
-                        img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
-                        lbl.configure(image=img_ctk)
-                        lbl.image = img_ctk
-                        hint.configure(text="Tap to unblur QR")
-            
-            qr_btn.configure(command=lambda f=qr_frame, btn=qr_btn: (f.pack_forget() if f.winfo_viewable() else (f.pack(fill="x", pady=(0, 10)), show_qr(f)), btn.configure(text="Hide QR" if f.winfo_viewable() else "View QR")))
+                    lbl.configure(image=img_ctk)
+                    lbl.image = img_ctk
+                    hint.configure(text="Tap to blur QR")
+            else:
+                if (img := utils.get_qr_image(cid, config.decrypt_key, blur=True, cred_data=cred)):
+                    img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=(200, 200))
+                    lbl.configure(image=img_ctk)
+                    lbl.image = img_ctk
+                    hint.configure(text="Tap to unblur QR")
+        
+        qr_btn.configure(command=lambda f=qr_frame, btn=qr_btn: (f.pack_forget() if f.winfo_viewable() else (f.pack(fill="x", pady=(0, 10)), show_qr(f)), btn.configure(text="Hide QR" if f.winfo_viewable() else "View QR")))
 
 def update_totps(root):
     for entry in config.frames:

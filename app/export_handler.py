@@ -5,10 +5,16 @@ def export_to_csv():
         return False, "No data to export"
     
     try:
-        filepath = os.path.join(os.path.expanduser("~/Desktop"), "CipherAuth.csv")
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        if not os.path.exists(desktop_path):
+            desktop_path = os.path.expanduser("~")
+        
+        filepath = os.path.join(desktop_path, "CipherAuth.csv")
         with open(filepath, 'w', newline='', encoding='utf-8') as f:
             csv.writer(f).writerows([["ID", "Platform", "Username", "Secret", "TOTP URL"]] + [[cred.get(k, '') for k in ['id', 'platform', 'username', 'secretcode', 'uri']] for cred in otps])
-        return True, "✅ File saved to desktop"
+        
+        location = "Desktop" if os.path.exists(os.path.join(os.path.expanduser("~"), "Desktop")) else "home directory"
+        return True, f"✅ File saved to {location}"
     except Exception as e:
         return False, f"❌ {str(e)}"
 
