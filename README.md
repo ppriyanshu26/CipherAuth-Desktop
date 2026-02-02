@@ -63,7 +63,7 @@ The project includes a `CipherAuth.spec` file, making it easy to create a standa
 Click on the **"➕ Add Creds"** button in the footer and fill in the account details.
 
 ### How do I back up my tokens?
-Use the **"📥 Download"** button to export an encrypted version of your credentials. Keep this file safe!
+Use the **"📥 Download"** button to export a decrypted version of your credentials. Keep this file safe!
 
 ### Can I use this on Mac or Linux?
 Yes! Since it is written in Python, you can run it from source or compile it using PyInstaller on your respective operating system. For mobile platforms like Linux iOS and Android, [check here](https://github.com/ppriyanshu26/Authenticator-Flutter)
