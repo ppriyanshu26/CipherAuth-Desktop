@@ -66,7 +66,7 @@ Click on the **"➕ Add Creds"** button in the footer and fill in the account de
 Use the **"📥 Download"** button to export a decrypted version of your credentials. Keep this file safe!
 
 ### Can I use this on Mac or Linux?
-Yes! Since it is written in Python, you can run it from source or compile it using PyInstaller on your respective operating system. For mobile platforms like Linux iOS and Android, [check here](https://github.com/ppriyanshu26/Authenticator-Flutter)
+Yes! Since it is written in Python, you can run it from source or compile it using PyInstaller on your respective operating system. For mobile platforms like Linux iOS and Android, [check here](https://github.com/ppriyanshu26/CipherAuth-Flutter)
 
 ### Is my data synced to the cloud?
 No. CipherAuth is designed to be fully offline for maximum privacy. Your data stays on your device. However, you can sync your credentials across multiple devices on the same network using the built-in **Sync** feature (🔃). Devices must have the same master password encryption key to synchronize securely.
